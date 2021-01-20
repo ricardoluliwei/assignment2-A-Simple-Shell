@@ -31,6 +31,7 @@
 #define TOKEN_SIZE 80
 #define SH_TOK_DELIM " \t\r\n\a"
 
+struct Job jobs[Maxjob];
 
 int compare(int a, int b){
 	if(a == 0||a>b){
