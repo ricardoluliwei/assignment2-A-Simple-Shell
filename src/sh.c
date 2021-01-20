@@ -49,6 +49,31 @@ int execute(char **args ){
             printf("%s\n", args[i]);
         }
     }
+	//check ouput to file
+	
+	while(1){
+		if(args[opos] != NULL){
+			if(args[opos][0] == '>'){
+				ofound = 1;
+				break;
+			}
+		}else{
+			break;
+		}
+		++opos;
+	}
+	//check input from file
+	while(1){
+			if(args[ipos] != NULL){
+				if(args[ipos][0] == '<'){
+					ifound = 1;
+					break;
+				}				
+			}else{
+				break;
+			}
+			++ipos;
+		}
     pid = fork();
 	if(pid == 0){
         mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
