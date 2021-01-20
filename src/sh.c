@@ -9,6 +9,16 @@
 #include <signal.h>
 #include <fcntl.h>
 
+
+struct process{
+	int job_id;
+	int pid;
+	char command_line[80];
+	int status;
+};
+
+struct process jobs[80];
+
 int compare(int a, int b){
 	if(a == 0||a>b){
 		return b;
@@ -100,10 +110,16 @@ int execute(char **args ){
 			
 		}else{
 			
-		
-			if(execvp(args[0], args) <0){
-				perror("Error!");
-				exit(0);
+			if(args[0][0] == '/'){
+				if(execv(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+			}else{
+				if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
 				}
 		}	
 	}else{
@@ -122,14 +138,12 @@ int main(){
     char input[80], *buffer, **args_buf, full[80];
 	int bufsize = TOKEN_SIZE;
 	char **args = malloc(bufsize *sizeof(char *));
-
-    
     int counter = 0, i, j;
 	
     //for(i =0; i< 80;i++){
             //strcpy(args[i], "");}
 
-    while (1)
+    while (1) // while loop to get user input
     {
         printf("prompt> ");
         fgets(input, (sizeof input / sizeof input[0]), stdin);
