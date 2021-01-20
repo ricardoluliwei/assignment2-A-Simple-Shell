@@ -12,7 +12,7 @@
 
 struct process{
 	int job_id;
-	int pid;
+	pid_t pid;
 	char command_line[80];
 	int status;
 };
@@ -103,9 +103,16 @@ int execute(char **args ){
 			for(i=0; i<compare(ipos, opos); i++){
 					buffer[i] = args[i];
 					}
-			if(execvp(args[0], buffer) <0){
-				perror("Error!");
-				exit(0);
+			if(args[0][0] == '/'){
+				if(execv(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+			}else{
+				if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
 				}
 			
 		}else{
@@ -124,7 +131,7 @@ int execute(char **args ){
 		}	
 	}else{
 		wait(&childpid);
-		return 1;
+		return pid;
 	}
 	
 	return 0;
@@ -169,12 +176,35 @@ int main(){
 			buffer = strtok(NULL, " ");
             counter++;
         }
-        execute(args);
-		/*
-        for(i =0; i< 80;i++){
-            strcpy(args[i], "");
-        }
-		*/
+		if(strcmp(args[0], "fg")==0){
+			if(args[0][0] == '%'){
+				//change stopped process to fg by JID
+			}else{
+				//change stopped process to fg by PID
+			}
+
+		}
+		if(strcmp(args[0], "bg")==0){
+			if(args[0][0] == '%'){
+				//place a running process to bg by JID
+			}else{
+				//place a running process to bg by PID
+			}
+
+		}
+		if(strcmp(args[0], "kill")==0){
+			if(args[0][0] == '%'){
+				//kill process to bg by JID
+			}else{
+				//kill a running process to bg by PID
+			}
+
+		}
+		//general case
+        pid_t pid = execute(args);
+		jobs[0].pid = pid;
+		strcpy(jobs[0].command_line, input);
+		jobs[0].status = 1;
         counter = 0;
     }
     
