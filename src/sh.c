@@ -24,6 +24,10 @@
 #define KILL "kill"
 #define QUIT "quit"
 
+// Sign
+#define Ampersand "&"
+#define Percentage_sign "%"
+
 #define TOKEN_SIZE 80
 #define SH_TOK_DELIM " \t\r\n\a"
 
