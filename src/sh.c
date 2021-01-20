@@ -4,13 +4,15 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
 
-
-#include <sh.h>
+#include "sh.h"
 
 //Constants
 #define Maxline 80
@@ -41,6 +43,7 @@ int compare(int a, int b){
 	}
 }
 
+
 char *sh_read_line(void)
 {
 	char *line = NULL;
@@ -58,6 +61,8 @@ char *sh_read_line(void)
 	}
 	return line;
 }
+
+
 int execute(char **args ){
     int i;
     int opos = 0;//check the pos of >
@@ -73,6 +78,31 @@ int execute(char **args ){
             printf("%s\n", args[i]);
         }
     }
+	//check ouput to file
+	
+	while(1){
+		if(args[opos] != NULL){
+			if(args[opos][0] == '>'){
+				ofound = 1;
+				break;
+			}
+		}else{
+			break;
+		}
+		++opos;
+	}
+	//check input from file
+	while(1){
+			if(args[ipos] != NULL){
+				if(args[ipos][0] == '<'){
+					ifound = 1;
+					break;
+				}				
+			}else{
+				break;
+			}
+			++ipos;
+		}
     pid = fork();
 	if(pid == 0){
         mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
@@ -92,39 +122,51 @@ int execute(char **args ){
 			for(i=0; i<compare(ipos, opos); i++){
 					buffer[i] = args[i];
 					}
-			if(execvp(args[0], buffer) <0){
-				perror("Error!");
-				exit(0);
+			if(args[0][0] == '/'){
+				if(execv(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+			}else{
+				if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
 				}
 			
 		}else{
 			
-		
-			if(execvp(args[0], args) <0){
-				perror("Error!");
-				exit(0);
+			if(args[0][0] == '/'){
+				if(execv(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+			}else{
+				if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
 				}
 		}	
 	}else{
 		wait(&childpid);
-		return 1;
+		return pid;
 	}
 	
 	return 0;
-    }
+}
+
 
 int main(){
     char input[80], *buffer, **args_buf, full[80];
 	int bufsize = TOKEN_SIZE;
 	char **args = malloc(bufsize *sizeof(char *));
-
-    
     int counter = 0, i, j;
 	
     //for(i =0; i< 80;i++){
             //strcpy(args[i], "");}
 
-    while (1)
+    while (1) // while loop to get user input
     {
         printf("prompt> ");
         fgets(input, (sizeof input / sizeof input[0]), stdin);
@@ -150,12 +192,35 @@ int main(){
 			buffer = strtok(NULL, " ");
             counter++;
         }
-        execute(args);
-		/*
-        for(i =0; i< 80;i++){
-            strcpy(args[i], "");
-        }
-		*/
+		if(strcmp(args[0], "fg")==0){
+			if(args[0][0] == '%'){
+				//change stopped process to fg by JID
+			}else{
+				//change stopped process to fg by PID
+			}
+
+		}
+		if(strcmp(args[0], "bg")==0){
+			if(args[0][0] == '%'){
+				//place a running process to bg by JID
+			}else{
+				//place a running process to bg by PID
+			}
+
+		}
+		if(strcmp(args[0], "kill")==0){
+			if(args[0][0] == '%'){
+				//kill process to bg by JID
+			}else{
+				//kill a running process to bg by PID
+			}
+
+		}
+		//general case
+        pid_t pid = execute(args);
+		jobs[0].pid = pid;
+		strcpy(jobs[0].command_line, input);
+		jobs[0].status = 1;
         counter = 0;
     }
     
