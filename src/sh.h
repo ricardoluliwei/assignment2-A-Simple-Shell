@@ -12,5 +12,8 @@ void run_bg(char *args);
 void run_kill(char *args);
 void quit();
 
+// IO redirection
+void change_output(char *file_name);
+void change_input(char *file_name);
 
 #endif
