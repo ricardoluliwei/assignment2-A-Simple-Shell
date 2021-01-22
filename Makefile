@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # University of California, Irvine
 # ICS 53
 # Author: Liwei Lu
@@ -33,3 +34,13 @@ clean-%:
 	@rm -rf build/$*
 	@rm -rf $*.gcda $*.gcno
 	@echo Clean 
+=======
+all:
+	@gcc src/sh.c -o shell
+	@echo Compile Completed, Start Running
+	@./shell
+
+clean:
+	@rm shell
+	@echo Clean Completed
+>>>>>>> Qiwei_He
