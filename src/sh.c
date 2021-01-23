@@ -70,6 +70,7 @@ int execute(char **args ){
 	int ofound = 0;
 	int ifound = 0;
 	int pfound = 0;
+	int isBackgroundTask = 0;
     pid_t pid;
     int childpid;
 	
@@ -149,7 +150,10 @@ int execute(char **args ){
 				}
 		}	
 	}else{
-		wait(&childpid);
+		if(!isBackgroundTask){
+			wait(&childpid);
+			//wait(pid);
+		}
 		return pid;
 	}
 	
@@ -192,27 +196,33 @@ int main(){
 			buffer = strtok(NULL, " ");
             counter++;
         }
-		if(strcmp(args[0], "fg")==0){
-			if(args[0][0] == '%'){
+		if(strcmp(args[0], FG)==0){
+			if(args[1][0] == '%'){
+				kill(jobs[atoi(args[1])].pid, SIGCONT);
 				//change stopped process to fg by JID
 			}else{
+				kill(atoi(args[1]), SIGCONT);
 				//change stopped process to fg by PID
 			}
 
 		}
-		if(strcmp(args[0], "bg")==0){
-			if(args[0][0] == '%'){
+		if(strcmp(args[0], BG)==0){
+			if(args[1][0] == '%'){
+				kill(jobs[atoi(args[1])].pid, SIGSTOP);
 				//place a running process to bg by JID
 			}else{
+				kill(atoi(args[1]), SIGSTOP);
 				//place a running process to bg by PID
 			}
 
 		}
-		if(strcmp(args[0], "kill")==0){
-			if(args[0][0] == '%'){
+		if(strcmp(args[0], KILL)==0){
+			if(args[1][0] == Percentage_sign){
 				//kill process to bg by JID
+				kill(jobs[atoi(args[1])].pid, SIGINT);
 			}else{
 				//kill a running process to bg by PID
+				kill(atoi(args[1]), SIGINT);
 			}
 
 		}
