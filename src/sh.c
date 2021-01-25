@@ -33,7 +33,7 @@
 #define Ampersand "&"
 #define Percentage_sign "%"
 
-#define TOKEN_SIZE 80
+#define MAX_LINE 100
 #define SH_TOK_DELIM " \t\r\n\a"
 
 struct Job jobs[Maxjob];
@@ -262,8 +262,8 @@ int execute(char **args ){
 
 
 int main(){
-    char input[80], *buffer, **args_buf, full[80];
-	int bufsize = TOKEN_SIZE;
+    char input[800], *buffer, **args_buf, full[800];
+	int bufsize = MAX_LINE;
 	char **args = malloc(bufsize *sizeof(char *));
     int counter = 0, i, j;
 	
@@ -295,8 +295,9 @@ int main(){
             //printf( "%s\n", buffer );
             //strcpy(args[counter], buffer); 
 			args[counter] = buffer;
+			
 			if(counter>= bufsize){
-				bufsize += TOKEN_SIZE;
+				bufsize += MAX_LINE;
 				args_buf = args;
 				args = realloc(args, bufsize *sizeof(char *));
 				if(!args){
@@ -305,6 +306,7 @@ int main(){
 					exit(EXIT_FAILURE);
 				}
 			}
+			
 			buffer = strtok(NULL, " ");
             counter++;
         }
