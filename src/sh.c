@@ -76,7 +76,6 @@ void run_fg(char** args){
 		//change stopped process to fg by PID
 	}
 
-	kill(getpid(), SIGCHLD);
 }
 
 void run_bg(char** args){
@@ -100,12 +99,23 @@ void run_kill(char** args){
 }
 
 void int_handler(int sig){
-    printf("Process %d received signal %d\n", getpid(), sig);
-    exit(0);
+    int i;
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == FOREGROUND){
+			kill(jobs[i].pid, SIGINT);
+			break;
+		}
+	}
 }
 
 void stop_handler(int sig){
-    pause();
+    int i;
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == FOREGROUND){
+			kill(jobs[i].pid, SIGTSTP);
+			break;
+		}
+	}
 }
 
 void child_handler(int sig){
@@ -129,8 +139,10 @@ void child_handler(int sig){
 
 	// check is there any foreground process
 	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND)
+		if(jobs[i].status == FOREGROUND){
 			pause();
+			break;
+		}	
 	}
 
 }
