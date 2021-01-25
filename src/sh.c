@@ -163,7 +163,7 @@ int execute(char **args ){
 	int isBackgroundTask = 0;
     pid_t pid;
     int status;
-	int jobID;
+	int jobID = -1;
 
     for(i = 0; i <80; i++){
         if( args[i] != NULL){
@@ -200,20 +200,12 @@ int execute(char **args ){
 	}
 
 	// check if the Job reaches max
-	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == EMPTY){
-			jobs[i].pid = pid;
-			if(isBackgroundTask){
-				jobs[i].status = RUNNING;
-			} else {
-				jobs[i].status = FOREGROUND;
-			}
+	for(i = 0; i < Maxjob; i++)
+		if(jobs[i].status == EMPTY)
 			jobID = i;
-			break;
-		}
-	}
+	
 
-	if(i == Maxjob){
+	if(jobID == -1){
 		printf("No space to execute a job!\n");
 		return -1;
 	}
@@ -264,6 +256,13 @@ int execute(char **args ){
 					}
 				}
 		}	
+	} else{
+		jobs[jobID].pid = pid;
+		if(isBackgroundTask){
+			jobs[jobID].status = RUNNING;
+		} else {
+			jobs[jobID].status = FOREGROUND;
+		}
 	}
 
 	return jobID;
@@ -332,9 +331,11 @@ int main(){
 		} else {
 		//general case
         int jobID = execute(args);
-		strcpy(jobs[jobID].command_line, input);
-		if(jobs[jobID].status == FOREGROUND)
-			pause();
+		if(jobID != -1){
+			strcpy(jobs[jobID].command_line, input);
+			if(jobs[jobID].status == FOREGROUND)
+				pause();
+			}
 		}
     }
     
