@@ -308,16 +308,6 @@ int main(){
             //printf( "%s\n", buffer );
             //strcpy(args[counter], buffer); 
 			args[counter] = buffer;
-			if(counter>= bufsize){
-				bufsize += TOKEN_SIZE;
-				args_buf = args;
-				args = realloc(args, bufsize *sizeof(char *));
-				if(!args){
-					free(args_buf);
-					fprintf(stderr, "sh: allocation error\n");
-					exit(EXIT_FAILURE);
-				}
-			}
 			buffer = strtok(NULL, " ");
             counter++;
         }
