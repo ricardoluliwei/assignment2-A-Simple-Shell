@@ -121,6 +121,8 @@ void child_handler(int sig){
 					memset(&jobs[i], 0, sizeof(struct Job));
 				else if(WIFSTOPPED(status)) // if stopped, change its status to stop
 					jobs[i].status = STOPPED;
+				
+				break;
 			}
 		}
 	}
