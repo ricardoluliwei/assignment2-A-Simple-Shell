@@ -26,7 +26,7 @@ build/%: src/%.c
 
 clean:
 	@rm -rf build
-	@rm -rf $(filter-out Makefile src, $(wildcard *))
+	@rm -rf $*.gcda $*.gcno
 	@echo Clean All!
 
 clean-%:
