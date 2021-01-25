@@ -51,10 +51,12 @@ int compare(int a, int b){
 void print_jobs(){
 	int i;
 	for(i=0; i<Maxjob; i++){
-		if(jobs[i].status == 1)
+		if(jobs[i].status == RUNNING)
 			printf("[%d] (%d) Running %s", i, jobs[i].pid, jobs[i].command_line);
-		else
+		else if(jobs[i].status == STOPPED)
 			printf("[%d] (%d) Stopped %s", i, jobs[i].pid, jobs[i].command_line);
+		else if(jobs[i].status == FOREGROUND)
+			printf("[%d] (%d) Foreground %s", i, jobs[i].pid, jobs[i].command_line);
 	}
 }
 
