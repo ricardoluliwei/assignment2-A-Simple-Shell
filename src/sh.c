@@ -97,7 +97,7 @@ void stop_handler(int sig){
     pause();
 }
 
-void chlid_handler(int sig){
+void child_handler(int sig){
     pid_t pid;
 	int status;
 	int i;
@@ -270,13 +270,13 @@ int main(){
 
 	/* Install the handler */
 	if (signal(SIGINT, int_handler) == SIG_ERR)
-		unix_error("signal error");
+		perror("signal error");
 
 	if (signal(SIGTSTP, stop_handler) == SIG_ERR)
-		unix_error("signal error");
+		perror("signal error");
 
 	if (signal(SIGCHLD, child_handler) == SIG_ERR)
-		unix_error("signal error");	
+		perror("signal error");	
 
     while (1) // while loop to get user input
     {
