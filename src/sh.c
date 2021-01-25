@@ -62,30 +62,33 @@ void print_jobs(){
 
 void run_fg(char** args){
 	int i;
-	
+	pid_t pid;
+
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND)
 			kill(jobs[i].pid, SIGTSTP);
 	}
 
 	if(args[1][0] == '%'){
-		kill(jobs[atoi(args[1])].pid, SIGCONT);
-		//change stopped process to fg by JID
+		pid = jobs[atoi(args[1])].pid;
 	}else{
-		kill(atoi(args[1]), SIGCONT);
-		//change stopped process to fg by PID
+		pid = atoi(args[1]);
 	}
 
+	kill(pid, SIGCONT);
+	waitpid(pid, NULL, WUNTRACED);
 }
 
 void run_bg(char** args){
+	pid_t pid;
+
 	if(args[1][0] == '%'){
-		kill(jobs[atoi(args[1])].pid, SIGSTOP);
-		//place a running process to bg by JID
+		pid = jobs[atoi(args[1])].pid;
 	}else{
-		kill(atoi(args[1]), SIGSTOP);
-		//place a running process to bg by PID
+		pid = atoi(args[1]);
 	}	
+	
+	kill(pid, SIGCONT);
 }
 
 void run_kill(char** args){
@@ -136,15 +139,6 @@ void child_handler(int sig){
 			}
 		}
 	}
-
-	// check is there any foreground process
-	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND){
-			pause();
-			break;
-		}	
-	}
-
 }
 
 
@@ -341,7 +335,7 @@ int main(){
 		if(jobID != -1){
 			strcpy(jobs[jobID].command_line, input);
 			if(jobs[jobID].status == FOREGROUND)
-				pause();
+				waitpid(jobs[jobID].pid, NULL, WUNTRACED);
 			}
 		}
     }
