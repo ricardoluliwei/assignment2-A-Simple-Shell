@@ -171,7 +171,6 @@ int execute(char **args ){
         if( args[i] != NULL){
 			if(args[i][0] ==  Ampersand)
 				isBackgroundTask = 1;
-            printf("%s\n", args[i]);
         }
     }
 	//check ouput to file
