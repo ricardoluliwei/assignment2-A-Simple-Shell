@@ -113,7 +113,7 @@ void child_handler(int sig){
 	int status;
 	int i;
 
-	while((pid = waitpid(-1, &status, WUNTRACED))){
+	while((pid = waitpid(-1, &status, WUNTRACED)) >= 0){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
 			if(jobs[i].pid == pid){
@@ -200,10 +200,12 @@ int execute(char **args ){
 	}
 
 	// check if the Job reaches max
-	for(i = 0; i < Maxjob; i++)
-		if(jobs[i].status == EMPTY)
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == EMPTY){
 			jobID = i;
-	
+			break;
+		}
+	}
 
 	if(jobID == -1){
 		printf("No space to execute a job!\n");
