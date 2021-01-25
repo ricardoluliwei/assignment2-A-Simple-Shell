@@ -6,7 +6,7 @@
 
 # Use gcc as a compiler
 CC=gcc
-CFLAGS=-g -fprofile-arcs -ftest-coverage
+CFLAGS=-g
 SOURCES := $(wildcard src/*.c)
 EXECUTABLES := $(patsubst src/%.c, build/%, $(SOURCES))
 
