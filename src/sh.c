@@ -76,7 +76,6 @@ void run_fg(char** args){
 		//change stopped process to fg by PID
 	}
 
-	kill(getpid(), SIGCHLD);
 }
 
 void run_bg(char** args){
@@ -100,12 +99,23 @@ void run_kill(char** args){
 }
 
 void int_handler(int sig){
-    printf("Process %d received signal %d\n", getpid(), sig);
-    exit(0);
+    int i;
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == FOREGROUND){
+			kill(jobs[i].pid, SIGINT);
+			break;
+		}
+	}
 }
 
 void stop_handler(int sig){
-    pause();
+    int i;
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == FOREGROUND){
+			kill(jobs[i].pid, SIGTSTP);
+			break;
+		}
+	}
 }
 
 void child_handler(int sig){
@@ -113,7 +123,7 @@ void child_handler(int sig){
 	int status;
 	int i;
 
-	while((pid = waitpid(-1, &status, WUNTRACED))){
+	while((pid = waitpid(-1, &status, WUNTRACED)) >= 0){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
 			if(jobs[i].pid == pid){
@@ -121,14 +131,18 @@ void child_handler(int sig){
 					memset(&jobs[i], 0, sizeof(struct Job));
 				else if(WIFSTOPPED(status)) // if stopped, change its status to stop
 					jobs[i].status = STOPPED;
+				
+				break;
 			}
 		}
 	}
 
 	// check is there any foreground process
 	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND)
+		if(jobs[i].status == FOREGROUND){
 			pause();
+			break;
+		}	
 	}
 
 }
@@ -163,13 +177,12 @@ int execute(char **args ){
 	int isBackgroundTask = 0;
     pid_t pid;
     int status;
-	int jobID;
+	int jobID = -1;
 
     for(i = 0; i <80; i++){
         if( args[i] != NULL){
 			if(args[i][0] ==  Ampersand)
 				isBackgroundTask = 1;
-            printf("%s\n", args[i]);
         }
     }
 	//check ouput to file
@@ -202,18 +215,12 @@ int execute(char **args ){
 	// check if the Job reaches max
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == EMPTY){
-			jobs[i].pid = pid;
-			if(isBackgroundTask){
-				jobs[i].status = RUNNING;
-			} else {
-				jobs[i].status = FOREGROUND;
-			}
 			jobID = i;
 			break;
 		}
 	}
 
-	if(i == Maxjob){
+	if(jobID == -1){
 		printf("No space to execute a job!\n");
 		return -1;
 	}
@@ -264,6 +271,13 @@ int execute(char **args ){
 					}
 				}
 		}	
+	} else{
+		jobs[jobID].pid = pid;
+		if(isBackgroundTask){
+			jobs[jobID].status = RUNNING;
+		} else {
+			jobs[jobID].status = FOREGROUND;
+		}
 	}
 
 	return jobID;
@@ -292,6 +306,8 @@ int main(){
     while (1) // while loop to get user input
     {
         printf("prompt> ");
+		memset(input, 0, 80);
+		memset(args, 0, bufsize *sizeof(char *));
         fgets(input, (sizeof input / sizeof input[0]), stdin);
         if(input[strlen(input)-1] == '\n') input[strlen(input)-1]=0;
 		
@@ -304,18 +320,6 @@ int main(){
             //printf( "%s\n", buffer );
             //strcpy(args[counter], buffer); 
 			args[counter] = buffer;
-			
-			if(counter>= bufsize){
-				bufsize += MAX_LINE;
-				args_buf = args;
-				args = realloc(args, bufsize *sizeof(char *));
-				if(!args){
-					free(args_buf);
-					fprintf(stderr, "sh: allocation error\n");
-					exit(EXIT_FAILURE);
-				}
-			}
-			
 			buffer = strtok(NULL, " ");
             counter++;
         }
@@ -333,10 +337,13 @@ int main(){
 			print_jobs();
 		} else {
 		//general case
+		
         int jobID = execute(args);
-		strcpy(jobs[jobID].command_line, input);
-		if(jobs[jobID].status == FOREGROUND)
-			pause();
+		if(jobID != -1){
+			strcpy(jobs[jobID].command_line, input);
+			if(jobs[jobID].status == FOREGROUND)
+				pause();
+			}
 		}
     }
     
