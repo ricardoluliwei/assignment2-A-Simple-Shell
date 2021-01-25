@@ -30,8 +30,8 @@
 #define QUIT "quit"
 
 // Sign
-#define Ampersand "&"
-#define Percentage_sign "%"
+#define Ampersand '&'
+#define Percentage_sign '%'
 
 #define TOKEN_SIZE 80
 #define SH_TOK_DELIM " \t\r\n\a"
@@ -52,15 +52,22 @@ void print_jobs(){
 	int i;
 	for(i=0; i<Maxjob; i++){
 		if(jobs[i].status == RUNNING)
-			printf("[%d] (%d) Running %s", i, jobs[i].pid, jobs[i].command_line);
+			printf("[%d] (%d) Running %s\n", i, jobs[i].pid, jobs[i].command_line);
 		else if(jobs[i].status == STOPPED)
-			printf("[%d] (%d) Stopped %s", i, jobs[i].pid, jobs[i].command_line);
+			printf("[%d] (%d) Stopped %s\n", i, jobs[i].pid, jobs[i].command_line);
 		else if(jobs[i].status == FOREGROUND)
-			printf("[%d] (%d) Foreground %s", i, jobs[i].pid, jobs[i].command_line);
+			printf("[%d] (%d) Foreground %s\n", i, jobs[i].pid, jobs[i].command_line);
 	}
 }
 
 void run_fg(char** args){
+	int i;
+	
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == FOREGROUND)
+			kill(jobs[i].pid, SIGTSTP);
+	}
+
 	if(args[1][0] == '%'){
 		kill(jobs[atoi(args[1])].pid, SIGCONT);
 		//change stopped process to fg by JID
@@ -68,6 +75,8 @@ void run_fg(char** args){
 		kill(atoi(args[1]), SIGCONT);
 		//change stopped process to fg by PID
 	}
+
+	kill(getpid(), SIGCHLD);
 }
 
 void run_bg(char** args){
@@ -117,7 +126,6 @@ void child_handler(int sig){
 	}
 
 	// check is there any foreground process
-
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND)
 			pause();
@@ -159,7 +167,7 @@ int execute(char **args ){
 
     for(i = 0; i <80; i++){
         if( args[i] != NULL){
-			if(strcmp(args[i], Ampersand) == 0)
+			if(args[i][0] ==  Ampersand)
 				isBackgroundTask = 1;
             printf("%s\n", args[i]);
         }
@@ -201,6 +209,7 @@ int execute(char **args ){
 				jobs[i].status = FOREGROUND;
 			}
 			jobID = i;
+			break;
 		}
 	}
 
@@ -320,14 +329,13 @@ int main(){
 			exit(0);
 		} else if(strcmp(args[0], JOBS) == 0){
 			print_jobs();
-		}
-
+		} else {
 		//general case
         int jobID = execute(args);
 		strcpy(jobs[jobID].command_line, input);
 		if(jobs[jobID].status == FOREGROUND)
 			pause();
-
+		}
     }
     
     return 0;
