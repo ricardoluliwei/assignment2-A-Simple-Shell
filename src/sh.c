@@ -2,9 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -18,6 +15,12 @@
 #define Maxline 80
 #define MaxArgc 80
 #define Maxjob 5
+
+// Job status
+#define EMPTY 0
+#define RUNNING 1
+#define FOREGROUND 2
+#define STOPPED 3
 
 //build-in commands
 #define JOBS "jobs"
@@ -41,6 +44,83 @@ int compare(int a, int b){
 	}else{
 		return a;
 	}
+}
+
+// build in command
+
+void print_jobs(){
+	int i;
+	for(i=0; i<Maxjob; i++){
+		if(jobs[i].status == 1)
+			printf("[%d] (%d) Running %s", i, jobs[i].pid, jobs[i].command_line);
+		else
+			printf("[%d] (%d) Stopped %s", i, jobs[i].pid, jobs[i].command_line);
+	}
+}
+
+void run_fg(char** args){
+	if(args[1][0] == '%'){
+		kill(jobs[atoi(args[1])].pid, SIGCONT);
+		//change stopped process to fg by JID
+	}else{
+		kill(atoi(args[1]), SIGCONT);
+		//change stopped process to fg by PID
+	}
+}
+
+void run_bg(char** args){
+	if(args[1][0] == '%'){
+		kill(jobs[atoi(args[1])].pid, SIGSTOP);
+		//place a running process to bg by JID
+	}else{
+		kill(atoi(args[1]), SIGSTOP);
+		//place a running process to bg by PID
+	}	
+}
+
+void run_kill(char** args){
+	if(args[1][0] == Percentage_sign){
+		//kill process to bg by JID
+		kill(jobs[atoi(args[1])].pid, SIGINT);
+	}else{
+		//kill a running process to bg by PID
+		kill(atoi(args[1]), SIGINT);
+	}
+}
+
+void int_handler(int sig){
+    printf("Process %d received signal %d\n", getpid(), sig);
+    exit(0);
+}
+
+void stop_handler(int sig){
+    pause();
+}
+
+void chlid_handler(int sig){
+    pid_t pid;
+	int status;
+	int i;
+
+	while((pid = waitpid(-1, &status, WUNTRACED))){
+		// find the child that sent the signal
+		for(i=0; i < Maxjob; i++){
+			if(jobs[i].pid == pid){
+				if(WIFEXITED(status)) // if exit, clear the space
+					memset(&jobs[i], 0, sizeof(struct Job));
+				else if(WIFSTOPPED(status)) // if stopped, change its status to stop
+					jobs[i].status = STOPPED;
+			}
+		}
+	}
+
+	// check is there any foreground process
+
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == FOREGROUND)
+			pause();
+	}
+
 }
 
 
@@ -72,10 +152,13 @@ int execute(char **args ){
 	int pfound = 0;
 	int isBackgroundTask = 0;
     pid_t pid;
-    int childpid;
-	
+    int status;
+	int jobID;
+
     for(i = 0; i <80; i++){
         if( args[i] != NULL){
+			if(strcmp(args[i], Ampersand) == 0)
+				isBackgroundTask = 1;
             printf("%s\n", args[i]);
         }
     }
@@ -92,20 +175,41 @@ int execute(char **args ){
 		}
 		++opos;
 	}
+
 	//check input from file
 	while(1){
-			if(args[ipos] != NULL){
-				if(args[ipos][0] == '<'){
-					ifound = 1;
-					break;
-				}				
-			}else{
+		if(args[ipos] != NULL){
+			if(args[ipos][0] == '<'){
+				ifound = 1;
 				break;
-			}
-			++ipos;
+			}				
+		}else{
+			break;
 		}
+		++ipos;
+	}
+
+	// check if the Job reaches max
+	for(i = 0; i < Maxjob; i++){
+		if(jobs[i].status == EMPTY){
+			jobs[i].pid = pid;
+			if(isBackgroundTask){
+				jobs[i].status = RUNNING;
+			} else {
+				jobs[i].status = FOREGROUND;
+			}
+			jobID = i;
+		}
+	}
+
+	if(i == Maxjob){
+		printf("No space to execute a job!\n");
+		return -1;
+	}
+
     pid = fork();
 	if(pid == 0){
+		// child process
         mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
 		if(ofound == 1||ifound == 1){ 
 			if(ifound==1){//input from file
@@ -149,15 +253,9 @@ int execute(char **args ){
 					}
 				}
 		}	
-	}else{
-		if(!isBackgroundTask){
-			wait(&childpid);
-			//wait(pid);
-		}
-		return pid;
 	}
-	
-	return 0;
+
+	return jobID;
 }
 
 
@@ -170,6 +268,16 @@ int main(){
     //for(i =0; i< 80;i++){
             //strcpy(args[i], "");}
 
+	/* Install the handler */
+	if (signal(SIGINT, int_handler) == SIG_ERR)
+		unix_error("signal error");
+
+	if (signal(SIGTSTP, stop_handler) == SIG_ERR)
+		unix_error("signal error");
+
+	if (signal(SIGCHLD, child_handler) == SIG_ERR)
+		unix_error("signal error");	
+
     while (1) // while loop to get user input
     {
         printf("prompt> ");
@@ -179,6 +287,8 @@ int main(){
         if(strcmp(input, "quit") == 0){break;}
         strcpy(full, input);
         buffer = strtok(input, " ");
+
+		counter = 0;
         while(buffer) {
             //printf( "%s\n", buffer );
             //strcpy(args[counter], buffer); 
@@ -196,42 +306,26 @@ int main(){
 			buffer = strtok(NULL, " ");
             counter++;
         }
+
+		// build in command
 		if(strcmp(args[0], FG)==0){
-			if(args[1][0] == '%'){
-				kill(jobs[atoi(args[1])].pid, SIGCONT);
-				//change stopped process to fg by JID
-			}else{
-				kill(atoi(args[1]), SIGCONT);
-				//change stopped process to fg by PID
-			}
-
+			run_fg(args);
+		} else if(strcmp(args[0], BG) == 0){
+			run_bg(args);
+		} else if(strcmp(args[0], KILL) == 0){
+			run_kill(args);
+		} else if(strcmp(args[0], QUIT) == 0){
+			exit(0);
+		} else if(strcmp(args[0], JOBS) == 0){
+			print_jobs();
 		}
-		if(strcmp(args[0], BG)==0){
-			if(args[1][0] == '%'){
-				kill(jobs[atoi(args[1])].pid, SIGSTOP);
-				//place a running process to bg by JID
-			}else{
-				kill(atoi(args[1]), SIGSTOP);
-				//place a running process to bg by PID
-			}
 
-		}
-		if(strcmp(args[0], KILL)==0){
-			if(args[1][0] == Percentage_sign){
-				//kill process to bg by JID
-				kill(jobs[atoi(args[1])].pid, SIGINT);
-			}else{
-				//kill a running process to bg by PID
-				kill(atoi(args[1]), SIGINT);
-			}
-
-		}
 		//general case
-        pid_t pid = execute(args);
-		jobs[0].pid = pid;
-		strcpy(jobs[0].command_line, input);
-		jobs[0].status = 1;
-        counter = 0;
+        int jobID = execute(args);
+		strcpy(jobs[jobID].command_line, input);
+		if(jobs[jobID].status == FOREGROUND)
+			pause();
+
     }
     
     return 0;
