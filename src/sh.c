@@ -121,6 +121,8 @@ void child_handler(int sig){
 					memset(&jobs[i], 0, sizeof(struct Job));
 				else if(WIFSTOPPED(status)) // if stopped, change its status to stop
 					jobs[i].status = STOPPED;
+				
+				break;
 			}
 		}
 	}
@@ -169,7 +171,6 @@ int execute(char **args ){
         if( args[i] != NULL){
 			if(args[i][0] ==  Ampersand)
 				isBackgroundTask = 1;
-            printf("%s\n", args[i]);
         }
     }
 	//check ouput to file
@@ -293,6 +294,8 @@ int main(){
     while (1) // while loop to get user input
     {
         printf("prompt> ");
+		memset(input, 0, 80);
+		memset(args, 0, bufsize *sizeof(char *));
         fgets(input, (sizeof input / sizeof input[0]), stdin);
         if(input[strlen(input)-1] == '\n') input[strlen(input)-1]=0;
 		
