@@ -101,7 +101,7 @@ void run_kill(char** args){
 
 void int_handler(int sig){
     printf("Process %d received signal %d\n", getpid(), sig);
-    exit(0);
+    exit(sig);
 }
 
 void stop_handler(int sig){
@@ -308,18 +308,6 @@ int main(){
             //printf( "%s\n", buffer );
             //strcpy(args[counter], buffer); 
 			args[counter] = buffer;
-			
-			if(counter>= bufsize){
-				bufsize += MAX_LINE;
-				args_buf = args;
-				args = realloc(args, bufsize *sizeof(char *));
-				if(!args){
-					free(args_buf);
-					fprintf(stderr, "sh: allocation error\n");
-					exit(EXIT_FAILURE);
-				}
-			}
-			
 			buffer = strtok(NULL, " ");
             counter++;
         }
