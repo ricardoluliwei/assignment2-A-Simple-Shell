@@ -295,6 +295,7 @@ int main(){
     {
         printf("prompt> ");
 		memset(input, 0, 80);
+		memset(args, 0, bufsize *sizeof(char *));
         fgets(input, (sizeof input / sizeof input[0]), stdin);
         if(input[strlen(input)-1] == '\n') input[strlen(input)-1]=0;
 		
