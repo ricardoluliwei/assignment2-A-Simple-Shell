@@ -116,7 +116,6 @@ void run_kill(char** args){
 		int i;
 		for(i = 0; i< 5; i++){
 			if(jobs[i].pid == atoi(args[1])){
-				printf("Killing process PID: %d, JID: %d\n", atoi(args[1]), i);
 				memset(&jobs[i], 0, sizeof(struct Job));
 				break;
 			}
@@ -139,7 +138,6 @@ void int_handler(int sig){
 
 void stop_handler(int sig){
     int i;
-	printf("STOP Handler\n");
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGTSTP);
@@ -166,25 +164,6 @@ void child_handler(int sig){
 			}
 		}
 	}
-}
-
-
-char *sh_read_line(void)
-{
-	char *line = NULL;
-	size_t bufsize = 0;  // have getline allocate a buffer for us
-
-	if (getline(&line, &bufsize, stdin) == -1) {
-		if (feof(stdin))  // EOF
-		{
-			fprintf(stderr, "EOF\n");
-			exit(EXIT_SUCCESS);
-		} else {
-			//fprintf(stderr, "Value of errno: %d\n", errno);
-			exit(EXIT_FAILURE);
-		}
-	}
-	return line;
 }
 
 

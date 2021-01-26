@@ -26,7 +26,7 @@ build/%: src/%.c
 
 clean:
 	@rm -rf build
-	@rm -rf $*.gcda $*.gcno
+	@rm -rf $*.gcda $*.gcno core.$*
 	@echo Clean All!
 
 clean-%:
