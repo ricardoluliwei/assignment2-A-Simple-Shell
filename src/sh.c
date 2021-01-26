@@ -109,9 +109,18 @@ void run_kill(char** args){
 	if(args[1][0] == Percentage_sign){
 		//kill process to bg by JID
 		kill(jobs[atoi(args[1])].pid, SIGINT);
+		memset(&jobs[atoi(args[1])], 0, sizeof(struct Job));
 	}else{
 		//kill a running process to bg by PID
 		kill(atoi(args[1]), SIGINT);
+		int i;
+		for(i = 0; i< 5; i++){
+			if(jobs[i].pid == atoi(args[1])){
+				printf("Killing process PID: %d, JID: %d\n", atoi(args[1]), i);
+				memset(&jobs[i], 0, sizeof(struct Job));
+				break;
+			}
+		}
 	}
 }
 
