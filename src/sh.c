@@ -122,7 +122,7 @@ void child_handler(int sig){
     pid_t pid;
 	int status;
 	int i;
-
+	printf("SIGCHILD handler\n");
 	while((pid = waitpid(-1, &status, WUNTRACED)) >= 0){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
@@ -245,6 +245,7 @@ int execute(char **args ){
 			for(i=0; i<compare(ipos, opos); i++){
 					buffer[i] = args[i];
 					}
+			/*
 			if(args[0][0] == '/'){
 				if(execv(args[0], args) <0){
 					perror("Error!");
@@ -256,9 +257,16 @@ int execute(char **args ){
 					exit(0);
 					}
 				}
+				*/
+			if(execv(args[0], args) <0){
+					if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+					}
 			
 		}else{
-			
+			/*
 			if(args[0][0] == '/'){
 				if(execv(args[0], args) <0){
 					perror("Error!");
@@ -270,6 +278,13 @@ int execute(char **args ){
 					exit(0);
 					}
 				}
+				*/
+			if(execv(args[0], args) <0){
+					if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+					}
 		}	
 	} else{
 		jobs[jobID].pid = pid;
