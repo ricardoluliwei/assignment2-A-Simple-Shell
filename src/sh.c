@@ -52,11 +52,11 @@ void print_jobs(){
 	int i;
 	for(i=0; i<Maxjob; i++){
 		if(jobs[i].status == RUNNING)
-			printf("[%d] (%d) Running %s\n", i, jobs[i].pid, jobs[i].command_line);
+			printf("[%d] (%d) Running %s\n", (i+1), jobs[i].pid, jobs[i].command_line);
 		else if(jobs[i].status == STOPPED)
-			printf("[%d] (%d) Stopped %s\n", i, jobs[i].pid, jobs[i].command_line);
+			printf("[%d] (%d) Stopped %s\n", (i+1), jobs[i].pid, jobs[i].command_line);
 		else if(jobs[i].status == FOREGROUND)
-			printf("[%d] (%d) Foreground %s\n", i, jobs[i].pid, jobs[i].command_line);
+			printf("[%d] (%d) Foreground %s\n", (i+1), jobs[i].pid, jobs[i].command_line);
 	}
 }
 
@@ -81,7 +81,7 @@ void run_fg(char** args){
 
 	for (i = 0; i < Maxjob; i++){
 		if(jobs[i].pid == pid){
-			jobs[i].status == FOREGROUND;
+			jobs[i].status = FOREGROUND;
 		}
 	}
 	
@@ -100,7 +100,7 @@ void run_bg(char** args){
 	kill(pid, SIGCONT);
 	for (i = 0; i < Maxjob; i++){
 		if(jobs[i].pid == pid){
-			jobs[i].status == RUNNING;
+			jobs[i].status = RUNNING;
 		}
 	}
 }
