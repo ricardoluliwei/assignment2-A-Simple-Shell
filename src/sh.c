@@ -379,6 +379,8 @@ int main(){
 			strcpy(jobs[jobID].command_line, input);
 			if(jobs[jobID].status == FOREGROUND)
 				waitpid(jobs[jobID].pid, NULL, WUNTRACED);
+				if(jobs[jobID].status == FOREGROUND){memset(&jobs[jobID], 0, sizeof(struct Job));}
+				
 			}
 		}
     }
