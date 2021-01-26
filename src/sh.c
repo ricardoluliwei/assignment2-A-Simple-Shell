@@ -178,7 +178,7 @@ void child_handler(int sig){
 	int status;
 	int i;
 
-	while((pid = waitpid(-1, &status, WUNTRACED)) > 0){
+	while((pid = waitpid(-1, &status, WNOHANG|WUNTRACED)) > 0){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
 			if(jobs[i].pid == pid){
