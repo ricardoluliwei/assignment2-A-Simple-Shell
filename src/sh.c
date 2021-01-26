@@ -130,6 +130,7 @@ void int_handler(int sig){
 
 void stop_handler(int sig){
     int i;
+	printf("STOP Handler\n");
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGTSTP);
