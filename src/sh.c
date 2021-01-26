@@ -138,7 +138,7 @@ void run_kill(char** args){
 		memset(&jobs[args[1][1] - '0' - 1], 0, sizeof(struct Job));
 	}else{
 		//kill a running process to bg by PID
-		kill(atoi(args[1]), SIGINT);
+		kill(atoi(args[1]), SIGKILL);
 		int i;
 		for(i = 0; i< 5; i++){
 			if(jobs[i].pid == atoi(args[1])){
