@@ -62,30 +62,47 @@ void print_jobs(){
 
 void run_fg(char** args){
 	int i;
-	
+	pid_t pid;
+
 	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND)
+		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGTSTP);
+			jobs[i].status = STOPPED;
+		}
 	}
 
 	if(args[1][0] == '%'){
-		kill(jobs[atoi(args[1])].pid, SIGCONT);
-		//change stopped process to fg by JID
+		pid = jobs[atoi(args[1])].pid;
 	}else{
-		kill(atoi(args[1]), SIGCONT);
-		//change stopped process to fg by PID
+		pid = atoi(args[1]);
 	}
 
+	kill(pid, SIGCONT);
+
+	for (i = 0; i < Maxjob; i++){
+		if(jobs[i].pid == pid){
+			jobs[i].status == FOREGROUND;
+		}
+	}
+	
+	waitpid(pid, NULL, WUNTRACED);
 }
 
 void run_bg(char** args){
+	pid_t pid;
+	int i;
 	if(args[1][0] == '%'){
-		kill(jobs[atoi(args[1])].pid, SIGSTOP);
-		//place a running process to bg by JID
+		pid = jobs[atoi(args[1])].pid;
 	}else{
-		kill(atoi(args[1]), SIGSTOP);
-		//place a running process to bg by PID
+		pid = atoi(args[1]);
 	}	
+	
+	kill(pid, SIGCONT);
+	for (i = 0; i < Maxjob; i++){
+		if(jobs[i].pid == pid){
+			jobs[i].status == RUNNING;
+		}
+	}
 }
 
 void run_kill(char** args){
@@ -98,11 +115,14 @@ void run_kill(char** args){
 	}
 }
 
+
 void int_handler(int sig){
     int i;
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGINT);
+			waitpid(jobs[i].pid, NULL, 0);
+			memset(&jobs[i], 0, sizeof(struct Job));
 			break;
 		}
 	}
@@ -113,6 +133,7 @@ void stop_handler(int sig){
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGTSTP);
+			jobs[i].status = STOPPED;
 			break;
 		}
 	}
@@ -127,24 +148,14 @@ void child_handler(int sig){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
 			if(jobs[i].pid == pid){
-				if(WIFEXITED(status)) // if exit, clear the space
+				if(WIFSIGNALED(status)) // if exit, clear the space
 					memset(&jobs[i], 0, sizeof(struct Job));
 				else if(WIFSTOPPED(status)) // if stopped, change its status to stop
 					jobs[i].status = STOPPED;
-				
 				break;
 			}
 		}
 	}
-
-	// check is there any foreground process
-	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND){
-			pause();
-			break;
-		}	
-	}
-
 }
 
 
@@ -356,7 +367,7 @@ int main(){
 		if(jobID != -1){
 			strcpy(jobs[jobID].command_line, input);
 			if(jobs[jobID].status == FOREGROUND)
-				pause();
+				waitpid(jobs[jobID].pid, NULL, WUNTRACED);
 			}
 		}
     }
