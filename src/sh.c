@@ -387,10 +387,8 @@ int main(){
 					pid_t pid;
 					int status;
 					pid = waitpid(jobs[jobID].pid, &status, WUNTRACED);
-					if(WIFEXITED(status) | WIFSIGNALED(status)){
+					if(jobs[jobID].status == FOREGROUND){
 						memset(&jobs[jobID], 0, sizeof(struct Job));
-					} else if(WIFSTOPPED(status)){
-						jobs[jobID].status = STOPPED;
 					}
 				}
 			}
