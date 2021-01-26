@@ -9,8 +9,6 @@
 #include <signal.h>
 #include <fcntl.h>
 
-#include "sh.h"
-
 //Constants
 #define Maxline 80
 #define MaxArgc 80
