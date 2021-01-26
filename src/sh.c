@@ -152,7 +152,7 @@ void child_handler(int sig){
 	int status;
 	int i;
 
-	while((pid = waitpid(-1, &status, WNOHANG)) > 0){
+	while((pid = waitpid(-1, &status, WUNTRACED)) > 0){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
 			if(jobs[i].pid == pid){
@@ -351,12 +351,20 @@ int main(){
 		} else if(strcmp(args[0], JOBS) == 0){
 			print_jobs();
 		} else {
-		//general case
-        int jobID = execute(args);
-		if(jobID != -1){
-			strcpy(jobs[jobID].command_line, input);
-			if(jobs[jobID].status == FOREGROUND)
-				waitpid(jobs[jobID].pid, NULL, WUNTRACED);
+			//general case
+			int jobID = execute(args);
+			if(jobID != -1){
+				strcpy(jobs[jobID].command_line, input);
+				if(jobs[jobID].status == FOREGROUND){
+					pid_t pid;
+					int status;
+					pid = waitpid(jobs[jobID].pid, &status, WUNTRACED);
+					if(WIFEXITED(status) | WIFSIGNALED(status)){
+						memset(&jobs[jobID], 0, sizeof(struct Job));
+					} else if(WIFSTOPPED(status)){
+						jobs[jobID].status = STOPPED;
+					}
+				}
 			}
 		}
     }
