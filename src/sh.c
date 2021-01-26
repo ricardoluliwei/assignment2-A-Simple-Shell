@@ -72,7 +72,8 @@ void run_fg(char** args){
 	}
 
 	if(args[1][0] == '%'){
-		pid = jobs[atoi(args[1])].pid;
+		int jid = args[1][1] - '0' -1;
+		pid = jobs[jid].pid;
 	}else{
 		pid = atoi(args[1]);
 	}
@@ -92,7 +93,8 @@ void run_bg(char** args){
 	pid_t pid;
 	int i;
 	if(args[1][0] == '%'){
-		pid = jobs[atoi(args[1])].pid;
+		int jid = args[1][1] - '0' -1;
+		pid = jobs[jid].pid;
 	}else{
 		pid = atoi(args[1]);
 	}	
@@ -108,8 +110,11 @@ void run_bg(char** args){
 void run_kill(char** args){
 	if(args[1][0] == Percentage_sign){
 		//kill process to bg by JID
-		kill(jobs[atoi(args[1])].pid, SIGINT);
-		memset(&jobs[atoi(args[1])], 0, sizeof(struct Job));
+		printf("Before converting JID: %c\n", args[1][1]);
+		int jid = args[1][1] - '0' -1;
+		printf("After converting JID: %d\n", jid);
+		kill(jobs[jid].pid, SIGINT);
+		memset(&jobs[jid], 0, sizeof(struct Job));
 	}else{
 		//kill a running process to bg by PID
 		kill(atoi(args[1]), SIGINT);
