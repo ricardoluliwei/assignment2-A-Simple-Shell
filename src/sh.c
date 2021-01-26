@@ -62,47 +62,76 @@ void print_jobs(){
 
 void run_fg(char** args){
 	int i;
-	
+	pid_t pid;
+
 	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND)
+		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGTSTP);
+			jobs[i].status = STOPPED;
+		}
 	}
 
 	if(args[1][0] == '%'){
-		kill(jobs[atoi(args[1])].pid, SIGCONT);
-		//change stopped process to fg by JID
+		pid = jobs[atoi(args[1])].pid;
 	}else{
-		kill(atoi(args[1]), SIGCONT);
-		//change stopped process to fg by PID
+		pid = atoi(args[1]);
 	}
 
+	kill(pid, SIGCONT);
+
+	for (i = 0; i < Maxjob; i++){
+		if(jobs[i].pid == pid){
+			jobs[i].status == FOREGROUND;
+		}
+	}
+	
+	waitpid(pid, NULL, WUNTRACED);
 }
 
 void run_bg(char** args){
+	pid_t pid;
+	int i;
 	if(args[1][0] == '%'){
-		kill(jobs[atoi(args[1])].pid, SIGSTOP);
-		//place a running process to bg by JID
+		pid = jobs[atoi(args[1])].pid;
 	}else{
-		kill(atoi(args[1]), SIGSTOP);
-		//place a running process to bg by PID
+		pid = atoi(args[1]);
 	}	
+	
+	kill(pid, SIGCONT);
+	for (i = 0; i < Maxjob; i++){
+		if(jobs[i].pid == pid){
+			jobs[i].status == RUNNING;
+		}
+	}
 }
 
 void run_kill(char** args){
 	if(args[1][0] == Percentage_sign){
 		//kill process to bg by JID
 		kill(jobs[atoi(args[1])].pid, SIGINT);
+		memset(&jobs[atoi(args[1])], 0, sizeof(struct Job));
 	}else{
 		//kill a running process to bg by PID
 		kill(atoi(args[1]), SIGINT);
+		int i;
+		for(i = 0; i< 5; i++){
+			if(jobs[i].pid == atoi(args[1])){
+				printf("Killing process PID: %d, JID: %d\n", atoi(args[1]), i);
+				memset(&jobs[i], 0, sizeof(struct Job));
+				break;
+			}
+		}
 	}
 }
+
 
 void int_handler(int sig){
     int i;
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGINT);
+			waitpid(jobs[i].pid, NULL, 0);
+			memset(&jobs[i], 0, sizeof(struct Job));
 			break;
 		}
 	}
@@ -110,9 +139,11 @@ void int_handler(int sig){
 
 void stop_handler(int sig){
     int i;
+	printf("STOP Handler\n");
 	for(i = 0; i < Maxjob; i++){
 		if(jobs[i].status == FOREGROUND){
 			kill(jobs[i].pid, SIGTSTP);
+			jobs[i].status = STOPPED;
 			break;
 		}
 	}
@@ -123,7 +154,7 @@ void child_handler(int sig){
 	int status;
 	int i;
 
-	while((pid = waitpid(-1, &status, WUNTRACED)) >= 0){
+	while((pid = waitpid(-1, &status, WNOHANG)) > 0){
 		// find the child that sent the signal
 		for(i=0; i < Maxjob; i++){
 			if(jobs[i].pid == pid){
@@ -131,20 +162,10 @@ void child_handler(int sig){
 					memset(&jobs[i], 0, sizeof(struct Job));
 				else if(WIFSTOPPED(status)) // if stopped, change its status to stop
 					jobs[i].status = STOPPED;
-				
 				break;
 			}
 		}
 	}
-
-	// check is there any foreground process
-	for(i = 0; i < Maxjob; i++){
-		if(jobs[i].status == FOREGROUND){
-			pause();
-			break;
-		}	
-	}
-
 }
 
 
@@ -245,6 +266,7 @@ int execute(char **args ){
 			for(i=0; i<compare(ipos, opos); i++){
 					buffer[i] = args[i];
 					}
+			/*
 			if(args[0][0] == '/'){
 				if(execv(args[0], args) <0){
 					perror("Error!");
@@ -256,9 +278,16 @@ int execute(char **args ){
 					exit(0);
 					}
 				}
+				*/
+			if(execv(args[0], args) <0){
+					if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+					}
 			
 		}else{
-			
+			/*
 			if(args[0][0] == '/'){
 				if(execv(args[0], args) <0){
 					perror("Error!");
@@ -270,6 +299,13 @@ int execute(char **args ){
 					exit(0);
 					}
 				}
+				*/
+			if(execv(args[0], args) <0){
+					if(execvp(args[0], args) <0){
+					perror("Error!");
+					exit(0);
+					}
+					}
 		}	
 	} else{
 		jobs[jobID].pid = pid;
@@ -342,7 +378,7 @@ int main(){
 		if(jobID != -1){
 			strcpy(jobs[jobID].command_line, input);
 			if(jobs[jobID].status == FOREGROUND)
-				pause();
+				waitpid(jobs[jobID].pid, NULL, WUNTRACED);
 			}
 		}
     }
