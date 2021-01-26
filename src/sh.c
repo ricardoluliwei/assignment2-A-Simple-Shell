@@ -135,7 +135,7 @@ void run_kill(char** args){
 	if(args[1][0] == Percentage_sign){
 		//kill process to bg by JID
 		kill(jobs[args[1][1] - '0' - 1].pid, SIGINT);
-		memset(&jobs[atoi(args[1])], 0, sizeof(struct Job));
+		memset(&jobs[args[1][1] - '0' - 1], 0, sizeof(struct Job));
 	}else{
 		//kill a running process to bg by PID
 		kill(atoi(args[1]), SIGINT);
