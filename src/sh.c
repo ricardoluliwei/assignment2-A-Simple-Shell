@@ -378,11 +378,14 @@ int main(){
 			print_jobs();
 		} else {
 		//general case
+		
         int jobID = execute(args);
 		if(jobID != -1){
 			strcpy(jobs[jobID].command_line, input);
 			if(jobs[jobID].status == FOREGROUND)
 				waitpid(jobs[jobID].pid, NULL, WUNTRACED);
+				if(jobs[jobID].status == FOREGROUND){memset(&jobs[jobID], 0, sizeof(struct Job));}
+				
 			}
 		}
     }
