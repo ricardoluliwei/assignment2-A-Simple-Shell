@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # University of California, Irvine
 # ICS 53
 # Author: Liwei Lu
@@ -7,7 +6,7 @@
 
 # Use gcc as a compiler
 CC=gcc
-CFLAGS=-g -fprofile-arcs -ftest-coverage
+CFLAGS=-g
 SOURCES := $(wildcard src/*.c)
 EXECUTABLES := $(patsubst src/%.c, build/%, $(SOURCES))
 
@@ -27,20 +26,10 @@ build/%: src/%.c
 
 clean:
 	@rm -rf build
-	@rm -rf $(filter-out Makefile src, $(wildcard *))
+	@rm -rf $*.gcda $*.gcno core.$*
 	@echo Clean All!
 
 clean-%:
 	@rm -rf build/$*
 	@rm -rf $*.gcda $*.gcno
 	@echo Clean 
-=======
-all:
-	@gcc src/sh.c -o shell
-	@echo Compile Completed, Start Running
-	@./shell
-
-clean:
-	@rm shell
-	@echo Clean Completed
->>>>>>> Qiwei_He

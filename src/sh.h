@@ -13,10 +13,9 @@
 #define SH_H
 
 struct Job{
-	int job_id;
 	pid_t pid;
 	char command_line[80];
-	int status;
+	int status; // 0 for empty, 1 for Running, 2 for Foreground, 3 for Stopped
 };
 
 
@@ -26,11 +25,10 @@ char *sh_read_line(void);
 int execute(char **args);
 
 // build in command
-void run_jobs();
-void run_fg(int id_type, int id);
-void run_bg(int id_type, int id);
-void run_kill(int id_type, int id);
-void quit();
+void print_jobs();
+void run_fg(char** args);
+void run_bg(char** args);
+void run_kill(char** args);
 
 // IO redirection
 void change_output(char *file_name);
@@ -39,6 +37,7 @@ void change_input(char *file_name);
 // Signal handler
 void int_handler(int sig);  // terminate
 void stop_handler(int sig); // stop
-void cont_handler(int sig); // continue
+
+void child_handler(int sig);
 
 #endif
